@@ -1,0 +1,71 @@
+{
+	"geode": "4.4.0",
+	"gd": {
+		"win": "2.2074",
+		"android": "2.2074",
+		"mac": "2.2074",
+		"ios": "2.2074"
+	},
+	"id": "nwo5.better_particles",
+	"name": "Better Particles",
+	"version": "v1.0.0",
+	"developer": "Nwo5",
+	"description": "Renders particle posvar.",
+	"tags": ["editor", "enhancement", "utility", "offline"],
+	"settings": {
+		"col1": {
+			"type": "rgba",
+			"name": "Primary Color",
+			"default": [0, 255, 0, 255]
+		},
+		"col2": {
+			"type": "rgba",
+			"name": "Secondary Color",
+			"default": [0, 255, 255, 255],
+			"description": "Endrad color."
+		},
+		"col3": {
+			"type": "rgba",
+			"name": "Extra Color",
+			"default": [0, 255, 0, 255],
+			"description": "Center line color."
+		},
+		"thickness": {
+			"type": "float",
+			"name": "thickness",
+			"default": 1
+		},
+		"center-line-thickness": {
+			"type": "float",
+			"name": "Center Line Thickness",
+			"default": 0.5
+		},
+		"fill": {
+			"type": "float",
+			"name": "Fill Opacity Multiplier",
+			"default": 0.25
+		},
+		"fill-for-rect": {
+			"type": "bool",
+			"name": "Fill For Rect",
+			"default": false,
+			"description": "Show radius var type fill for gravity type particles."
+		},
+		"lines-to-center": {
+			"type": "bool",
+			"name": "Lines To Center",
+			"default": true,
+			"description": "Draw lines to the center of the particle object."
+		},
+		"col1-for-center-lines": {
+			"type": "bool",
+			"name": "Use Primary Color For Center Lines",
+			"default": true
+		},
+		"hide-on-different-layer": {
+			"type": "bool",
+			"name": "Hide On Different Layer",
+			"default": false
+		}
+	}
+}
