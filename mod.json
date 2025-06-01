@@ -8,9 +8,10 @@
 	},
 	"id": "nwo5.better_particles",
 	"name": "Better Particles",
-	"version": "v1.0.0",
+	"version": "v1.0.1",
 	"developer": "Nwo5",
 	"description": "Renders particle posvar.",
+	"links": {"source": "https://github.com/Nwo5-trg/Better-Particles"},
 	"tags": ["editor", "enhancement", "utility", "offline"],
 	"settings": {
 		"col1": {
