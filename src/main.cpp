@@ -111,8 +111,7 @@ class $modify(LevelEditorLayer) {
                     ccp(pos.x + xRange, pos.y - yRange)
                 };
 
-                if (rotation == 0);
-                else { // learning trigonometry for ts smh
+                if (rotation != 0) { // learning trigonometry for ts smh
                     float rad = rotation * (M_PI / 180.0f);
                     auto cos = std::cos(rad);
                     auto sin = std::sin(rad);
