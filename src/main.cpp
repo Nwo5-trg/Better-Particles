@@ -10,7 +10,6 @@ const auto emptyCCC4F = ccc4f(0.0f, 0.0f, 0.0f, 0.0f);
 class $modify(LevelEditorLayer) {
     struct Fields {
         CCDrawNode* particleBoxDrawNode;
-        CCLayer* batchLayer;
 
         ccColor4F col1 = ccc4FFromccc4B(mod->getSettingValue<cocos2d::ccColor4B>("col1"));
         ccColor4F col2 = ccc4FFromccc4B(mod->getSettingValue<cocos2d::ccColor4B>("col2"));
@@ -26,17 +25,13 @@ class $modify(LevelEditorLayer) {
 
     bool init(GJGameLevel* p0, bool p1) {	
 		if (!LevelEditorLayer::init(p0, p1)) return false;
-            // ive been using ts forever now and now i realise i could just use m_drawgridlayer->m_objectnode but wtv its habit atp
-            if (auto shaderLayer = this->getChildByType<ShaderLayer>(0)) m_fields->batchLayer = shaderLayer->getChildByType<CCNode>(1)->getChildByType<CCLayer>(0);
-            else m_fields->batchLayer = this->getChildByType<CCNode>(1)->getChildByType<CCLayer>(0);
-
-            auto particleBoxDrawNode = CCDrawNode::create();
-            particleBoxDrawNode->setPosition(ccp(0.0f, 0.0f));
-            particleBoxDrawNode->setZOrder(1401);
-            particleBoxDrawNode->setID("particle-box-draw-node");
-            particleBoxDrawNode->setBlendFunc({GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA});
-            m_fields->batchLayer->addChild(particleBoxDrawNode);
-            m_fields->particleBoxDrawNode = particleBoxDrawNode;
+        auto particleBoxDrawNode = CCDrawNode::create();
+        particleBoxDrawNode->setPosition(ccp(0.0f, 0.0f));
+        particleBoxDrawNode->setZOrder(1401);
+        particleBoxDrawNode->setID("particle-box-draw-node");
+        particleBoxDrawNode->setBlendFunc({GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA});
+        m_objectLayer->addChild(particleBoxDrawNode); // i do not trust this even tho its prolly perfectly safe and good and fine and better than what i was doing (better trail traumatized me)
+        m_fields->particleBoxDrawNode = particleBoxDrawNode;
         return true;
     }
 
@@ -46,52 +41,44 @@ class $modify(LevelEditorLayer) {
     }
 
     void updateParticleRender() {
-        auto particleObjs = ccArrayToVector<ParticleGameObject*>(m_particleObjects);
-        if (particleObjs.empty()) return;
+        if (!m_particleObjects || m_particleObjects->count() == 0) return;
         auto fields = m_fields.self();
         auto drawNode = fields->particleBoxDrawNode;
         if (!fields->particleBoxDrawNode) return;
         drawNode->clear();
-        if (m_hideParticleIcons || m_alwaysHideParticleIcons) return;
+        if (m_hideParticleIcons || m_alwaysHideParticleIcons || m_playbackActive) return;
         auto col1 = fields->col1;
         auto col2 = fields->col2;
         auto col3 = fields->col1ForCenterLines ? col1 : fields->col3;
-        auto zoom = fields->batchLayer->getScale();
-        auto thickness = fields->thickness / zoom;
-        auto centerLineThickness = fields->centerLineThickness / zoom;
-        auto fill = fields->fill;
-        auto fillForRect = fields->fillForRect;
-        auto linesToCenter = fields->linestoCenter;
-        auto hideOnNonLayer = fields->hideOnNonLayer;
-        auto currentLayer = m_currentLayer;
-        for (auto obj : particleObjs) {
+        float zoom = m_objectLayer->getScale();
+        float thickness = fields->thickness / zoom;
+        float centerLineThickness = fields->centerLineThickness / zoom;
+        float fill = fields->fill;
+        bool fillForRect = fields->fillForRect;
+        bool linesToCenter = fields->linestoCenter;
+        bool hideOnNonLayer = fields->hideOnNonLayer;
+        int currentLayer = m_currentLayer;
+        for (auto obj : CCArrayExt<ParticleGameObject*>(m_particleObjects)) {
             auto objCol1 = col1;
             auto objCol2 = col2;
             auto objCol3 = col3;
             if (!(currentLayer == -1 || obj->m_editorLayer == currentLayer || obj->m_editorLayer == currentLayer)) {
                 if (hideOnNonLayer) continue;
-                else {
-                    objCol1 = ccc4f(col1.r, col1.g, col1.b, col1.a * 0.35f);
-                    objCol2 = ccc4f(col2.r, col2.g, col2.b, col2.a * 0.35f);
-                    objCol3 = ccc4f(col3.r, col3.g, col3.b, col3.a * 0.35f);
-                }
+                objCol1 = ccc4f(col1.r, col1.g, col1.b, col1.a * 0.35f);
+                objCol2 = ccc4f(col2.r, col2.g, col2.b, col2.a * 0.35f);
+                objCol3 = ccc4f(col3.r, col3.g, col3.b, col3.a * 0.35f);
             }
-            std::vector<std::string> particleData;
-            std::stringstream ss(obj->m_particleData);
-            std::string str;
-            while (std::getline(ss, str, 'a')) particleData.push_back(str); // robtop stores particle shit in this string, its just particle struct but seperated with "a"s
+            ParticleStruct particleData;
+            GameToolbox::particleStringToStruct(obj->m_particleData, particleData);
 
             auto pos = obj->getPosition();
-            auto scale = ccp(obj->m_scaleX, obj->m_scaleY);
-            auto maxScale = std::max(scale.x, scale.y);
+            float maxScale = std::max(obj->m_scaleX, obj->m_scaleY);
 
-            auto radial = std::strtol(particleData[51].c_str(), nullptr, 10) == 1;
-
-            if (radial) {
-                auto startRad = std::strtof(particleData[45].c_str(), nullptr) * maxScale;
-                auto endRad = std::strtof(particleData[47].c_str(), nullptr) * maxScale;
-                auto startRadVar = std::strtof(particleData[46].c_str(), nullptr) * maxScale;
-                auto endRadVar = std::strtof(particleData[48].c_str(), nullptr) * maxScale;
+            if (particleData.EmitterMode == 1) {
+                float startRad = particleData.StartRadius * maxScale;
+                float endRad = particleData.EndRadius * maxScale;
+                float startRadVar = particleData.StartRadiusVar * maxScale;
+                float endRadVar = particleData.EndRadiusVar * maxScale;
 
                 if (endRad == 0.0f && endRadVar != 0.0f) drawNode->drawCircle(pos, endRadVar, ccc4f(objCol2.r, objCol2.g, objCol2.b, objCol2.a * fill), thickness, objCol2, 100); // negative thickness not a great idea
                 else if (endRad != 0.0f) {
@@ -106,14 +93,19 @@ class $modify(LevelEditorLayer) {
                 } else drawNode->drawCircle(pos, 2.5f, objCol1, 0.0f, emptyCCC4F, 25);
                 
                 if (linesToCenter) {
-                    auto lineDistance = std::max(startRad + startRadVar, endRad + endRadVar) * 0.707106; // close enough this saves a calculation
-                    for (auto pos2 : {ccp(pos.x + lineDistance, pos.y + lineDistance), ccp(pos.x - lineDistance, pos.y + lineDistance), ccp(pos.x - lineDistance, pos.y - lineDistance), ccp(pos.x + lineDistance, pos.y -lineDistance)}) drawNode->drawSegment(pos, pos2, centerLineThickness, objCol3);
+                    auto lineDistance = std::max(startRad + startRadVar, endRad + endRadVar) * 0.707106;
+                    for (auto pos2 : {
+                        ccp(pos.x + lineDistance, pos.y + lineDistance), 
+                        ccp(pos.x - lineDistance, pos.y + lineDistance), 
+                        ccp(pos.x - lineDistance, pos.y - lineDistance), 
+                        ccp(pos.x + lineDistance, pos.y -lineDistance)
+                    }) drawNode->drawSegment(pos, pos2, centerLineThickness, objCol3);
                 }
             }
             else {
                 auto rotation = -obj->getRotation();
-                auto xRange = std::strtof(particleData[9].c_str(), nullptr) * scale.x;
-                auto yRange = std::strtof(particleData[10].c_str(), nullptr) * scale.y;
+                auto xRange = particleData.PosVarX * obj->m_scaleX;
+                auto yRange = particleData.PosVarY * obj->m_scaleY;
 
                 CCPoint points[4] = {
                     ccp(pos.x + xRange, pos.y + yRange),
@@ -122,8 +114,7 @@ class $modify(LevelEditorLayer) {
                     ccp(pos.x + xRange, pos.y - yRange)
                 };
 
-                if (rotation == 0);
-                else { // learning trigonometry for ts smh
+                if (rotation != 0) { // learning trigonometry for ts smh
                     float rad = rotation * (M_PI / 180.0f);
                     auto cos = std::cos(rad);
                     auto sin = std::sin(rad);
